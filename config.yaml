@@ -1,0 +1,77 @@
+# Email Intent Classification System Configuration
+# Based on "Distilling Step-by-Step" (Wang et al., 2023)
+
+# Intent Taxonomy
+taxonomy:
+  labels:
+    - inquiry
+    - complaint
+    - request
+    - confirmation
+    - cancellation
+    - feedback
+    - escalation
+    - follow_up
+    - out_of_scope
+
+# Teacher Model Configuration (Gemini)
+teacher:
+  model_name: "gemini-1.5-flash"
+  # api_key: "your-api-key-here"  # Or set GOOGLE_API_KEY env var
+  temperature: 0.1
+  max_output_tokens: 1024
+  num_consistency_samples: 3  # For confidence estimation
+
+# Student Model Configuration (Gemma)
+student:
+  model_name: "google/gemma-2b"
+  max_length: 512
+  hidden_size: 2048
+  use_lora: true
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.1
+
+# Training Configuration
+training:
+  output_dir: "./outputs"
+  data_dir: "./data"
+  batch_size: 8
+  gradient_accumulation_steps: 2
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  num_epochs: 3
+  warmup_ratio: 0.1
+  max_grad_norm: 1.0
+
+  # Multi-task loss weights
+  label_loss_weight: 1.0
+  rationale_loss_weight: 0.5
+  calibration_loss_weight: 0.1
+
+  # Evaluation and saving
+  eval_steps: 500
+  save_steps: 1000
+  logging_steps: 100
+
+  # Hardware
+  fp16: true
+  dataloader_num_workers: 4
+  seed: 42
+
+# Inference Configuration
+inference:
+  # Confidence thresholds
+  acceptance_threshold: 0.8   # Accept if confidence >= threshold
+  abstention_threshold: 0.5   # Abstain if confidence < threshold
+
+  # Cascaded inference
+  enable_teacher_fallback: true
+  fallback_threshold: 0.6     # Use teacher if confidence < threshold
+
+  # Calibration
+  temperature: 1.0  # Will be optimized during calibration
+
+  # Batch processing
+  batch_size: 32
+  max_length: 512
